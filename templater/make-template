@@ -1,0 +1,219 @@
+#!/usr/bin/env python2
+
+import getopt
+import sys
+import socket
+import getpass
+import logging
+
+from time import sleep
+from datetime import date
+
+
+import paramiko
+
+from ovirtsdk.xml import params
+from ovirtsdk.api import API
+
+
+MB = 1024*1024
+GB = MB * 1024
+
+MAC_ADDRESS = "00:16:3e:7f:e0:7e"
+IP_ADDRESS = "87.124.126.93"
+VM_NAME = "centos-6-x64_" + date.today().strftime("%Y-%m-%d")
+TEMPLATE_NAME = VM_NAME
+
+
+def main():
+    logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:", ["help", "verbose", "username=", "host="])
+    except getopt.GetoptError as err:
+        logging.error(str(err))
+        usage()
+        sys.exit(2)
+
+    username = False
+    host = False
+    password = False
+
+    for opt, arg in opts:
+        if opt in ("-h", "--help"):
+            usage()
+            sys.exit()
+        elif opt in ("-u", "--username"):
+            username = arg
+        elif opt in ("-r", "--host"):
+            host = arg
+        elif opt in ("-v", "--verbose"):
+            logging.getLogger().setLevel(logging.INFO)
+
+    if username is False:
+        username = raw_input("Enter username to connect to engine: ")
+    password = getpass.getpass("Enter password to connect to engine: ")
+    if host is False:
+        host = raw_input("Enter engine hostname or IP: ")
+
+    api = connect(username, password, host)
+
+    run(api)
+
+
+def usage():
+    print "usage: " + __file__ + " [OPTION..]"
+    print """
+    -h, --help: display this usage information
+    -v, --verbose: show lots of output
+    -u <username>, --username=<username>: the username to connect to the engine
+    -r <hostname>, --host=<hostname>: the hostname or IP of the engine
+"""
+
+
+def connect(username, password, host):
+    try:
+        api = API(
+            url="https://{}/api".format(host),
+            username=username,
+            password=password,
+            insecure=True)
+    except Exception:
+        logging.error("Unable to connect to engine")
+        sys.exit(1)
+
+    return api
+
+
+def run(api):
+    vmname = VM_NAME
+    templatename = vmname
+    memory = 1*GB
+    mac = params.MAC(address=MAC_ADDRESS)
+    disksize = 8*GB
+
+    vm = create_vm(api, vmname, memory, mac, disksize)
+    vm.start()
+
+    sysprep(api, vm)
+    create_template(api, vm, templatename)
+
+    cleanup(vm)
+
+    logging.info("Finished, created template %s", templatename)
+
+
+def create_vm(api, vmname, memory, mac, disksize):
+    logging.info("Creating VM")
+
+    # Operating System
+    osparams = params.OperatingSystem()
+    osparams.set_type("rhel_6x64")
+
+    vmparams = params.VM(
+        name=vmname,
+        cluster=api.clusters.get(name="Default"),
+        template=api.templates.get(name="Blank"),
+        memory=memory,
+        initialization=None,
+        os=osparams)
+    # VM type
+    vmparams.set_type("server")
+
+    # Create the VM
+    api.vms.add(vmparams)
+    vm = api.vms.get(name=vmname)
+
+    # Bug: https://bugzilla.redhat.com/show_bug.cgi?id=1039009
+    vm.set_initialization(None)
+
+    vm.set_run_once(True)
+
+    logging.info("Adding NIC")
+    vm.nics.add(params.NIC(
+        name="eth0",
+        network=params.Network(name="ovirtmgmt"),
+        interface="virtio",
+        mac=mac))
+
+    logging.info("Adding disks")
+    vm.disks.add(params.Disk(
+        storage_domains=params.StorageDomains(storage_domain=[api.storagedomains.get("data")]),
+        size=disksize,
+        status=None,
+        interface="virtio",
+        format="cow",
+        sparse=True,
+        bootable=True))
+
+    logging.info("Waiting for VM to reach 'Down' state")
+    while api.vms.get(vmname).status.state != 'down':
+        sleep(1)
+
+    logging.info("Waiting for disks to unlock")
+    locked = True
+    while locked:
+        locked = False
+        for disk in api.vms.get(vmname).disks.list():
+            if disk.status.state != "ok":
+                locked = True
+        sleep(1)
+
+    return vm
+
+
+def sysprep(api, vm):
+    # Wait for installation to complete
+    logging.info("Waiting for SSH connection")
+    installing = True
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    while installing:
+        try:
+            ssh.connect(IP_ADDRESS, username="root", timeout=3)
+            installing = False
+        except socket.error:
+            sleep(10)
+
+    logging.info("Sysprepping VM")
+
+    # Copy sysprep script
+    sftp = ssh.open_sftp()
+    sftp.put("files/sysprep.sh", "/tmp/sysprep.sh")
+    sftp.chmod("/tmp/sysprep.sh", 777)
+
+    # Copy cloud-init config
+    sftp.put("files/cloud.cfg", "/tmp/cloud.cfg")
+    sftp.chmod("/tmp/cloud.cfg", 664)
+
+    # Run sysprep script
+    ssh.exec_command("/tmp/sysprep.sh >/tmp/log 2>&1")
+    ssh.close()
+
+    # TODO: check exit code or timeout
+
+    logging.info("Waiting for VM to shut down after sysprep")
+    while api.vms.get(vm.name).status.state != 'down':
+        sleep(5)
+
+
+def create_template(api, vm, templatename):
+    logging.info("Creating template")
+    templateparams = params.Template(
+        name=templatename,
+        cluster=api.clusters.get(name="Default"),
+        vm=api.vms.get(name=vm.name))
+    api.templates.add(templateparams)
+
+    logging.info("Waiting for template to unlock")
+    while api.templates.get(name=templatename).status.state == "locked":
+        sleep(5)
+
+
+def cleanup(vm):
+    logging.info("Removing VM")
+    vm.delete()
+
+
+if __name__ == "__main__":
+    main()
