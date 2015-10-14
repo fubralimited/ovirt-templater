@@ -12,7 +12,7 @@ a template based off of that VM.
 ## Install
 
 ```bash
-$ git clone
+$ git clone https://github.com/fubralimited/ovirt-stuff.git
 ```
 
 ## Usage
