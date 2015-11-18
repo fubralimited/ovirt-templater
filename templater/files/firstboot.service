@@ -1,0 +1,13 @@
+[Unit]
+Description=Set hostname on first boot
+Before=network.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/mount /dev/sr1 /mnt
+ExecStart=/usr/local/bin/cloud-hostname
+ExecStartPost=/usr/bin/umount /mnt
+ExecStartPost=/bin/rm /etc/systemd/system/multi-user.target.wants/%n
+
+[Install]
+WantedBy=multi-user.target

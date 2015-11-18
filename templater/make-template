@@ -21,7 +21,7 @@ GB = MB * 1024
 
 MAC_ADDRESS = "00:16:3e:7f:e0:7e"
 IP_ADDRESS = "87.124.126.93"
-VM_NAME = "centos-6-x64_" + date.today().strftime("%Y-%m-%d")
+VM_NAME = "centos-7-x64"
 TEMPLATE_NAME = VM_NAME
 
 
@@ -93,7 +93,8 @@ def run(api):
     disksize = 8*GB
 
     vm = create_vm(api, vmname, memory, mac, disksize)
-    vm.start()
+
+    install_vm(api, vm)
 
     sysprep(api, vm)
     create_template(api, vm, templatename)
@@ -108,7 +109,7 @@ def create_vm(api, vmname, memory, mac, disksize):
 
     # Operating System
     osparams = params.OperatingSystem()
-    osparams.set_type("rhel_6x64")
+    osparams.set_type("rhel_7x64")
 
     vmparams = params.VM(
         name=vmname,
@@ -161,6 +162,17 @@ def create_vm(api, vmname, memory, mac, disksize):
 
     return vm
 
+def install_vm(api, vm):
+    logging.info("Starting VM with PXE boot")
+    vm.start(action=params.Action(vm=params.VM(os=params.OperatingSystem(boot=[params.Boot(dev="network")]))))
+
+    logging.info("Waiting for install to complete")
+    while api.vms.get(vm.name).status.state != 'down':
+        sleep(10)
+
+    logging.info("Installed, powering up VM")
+    vm.start()
+
 
 def sysprep(api, vm):
     # Wait for installation to complete
@@ -179,15 +191,14 @@ def sysprep(api, vm):
 
     # Copy sysprep script
     sftp = ssh.open_sftp()
-    sftp.put("files/sysprep.sh", "/tmp/sysprep.sh")
-    sftp.chmod("/tmp/sysprep.sh", 777)
+    sftp.put("files/sysprep", "/tmp/sysprep")
+    sftp.chmod("/tmp/sysprep", 777)
 
-    # Copy cloud-init config
-    sftp.put("files/cloud.cfg", "/tmp/cloud.cfg")
-    sftp.chmod("/tmp/cloud.cfg", 664)
+    sftp.put("files/firstboot.service", "/tmp/firstboot.service")
+    sftp.put("files/cloud-hostname", "/tmp/cloud-hostname")
 
     # Run sysprep script
-    ssh.exec_command("/tmp/sysprep.sh >/tmp/log 2>&1")
+    ssh.exec_command("/tmp/sysprep >/dev/null 2>&1")
     ssh.close()
 
     # TODO: check exit code or timeout
@@ -199,6 +210,7 @@ def sysprep(api, vm):
 
 def create_template(api, vm, templatename):
     logging.info("Creating template")
+    # TODO: Use template version
     templateparams = params.Template(
         name=templatename,
         cluster=api.clusters.get(name="Default"),
