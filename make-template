@@ -20,7 +20,7 @@ MB = 1024*1024
 GB = MB * 1024
 
 MAC_ADDRESS = "00:16:3e:7f:e0:7e"
-IP_ADDRESS = "87.124.126.93"
+IP_ADDRESS = "87.124.72.10"
 VM_NAME = "centos-7-x64"
 TEMPLATE_NAME = VM_NAME
 
@@ -133,7 +133,7 @@ def create_vm(api, vmname, memory, mac, disksize):
     logging.info("Adding NIC")
     vm.nics.add(params.NIC(
         name="eth0",
-        network=params.Network(name="ovirtmgmt"),
+        network=params.Network(name="guests"),
         interface="virtio",
         mac=mac))
 
