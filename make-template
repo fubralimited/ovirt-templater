@@ -11,6 +11,7 @@ from datetime import date
 
 
 import paramiko
+import yaml
 
 from ovirtsdk.xml import params
 from ovirtsdk.api import API
@@ -19,14 +20,13 @@ from ovirtsdk.api import API
 MB = 1024*1024
 GB = MB * 1024
 
-MAC_ADDRESS = "00:16:3e:7f:e0:7e"
-IP_ADDRESS = "87.124.72.10"
-VM_NAME = "centos-7-x64"
-TEMPLATE_NAME = VM_NAME
+CONFIG_FILE = "config.yaml"
 
 
 def main():
     logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+
+    distros = load_config()['distros']
 
     try:
         opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:", ["help", "verbose", "username=", "host="])
@@ -58,7 +58,8 @@ def main():
 
     api = connect(username, password, host)
 
-    run(api)
+    for distro in distros:
+        run(api, distro)
 
 
 def usage():
@@ -69,6 +70,13 @@ def usage():
     -u <username>, --username=<username>: the username to connect to the engine
     -r <hostname>, --host=<hostname>: the hostname or IP of the engine
 """
+
+
+def load_config():
+    stream = file(CONFIG_FILE, 'r')
+    config = yaml.load(stream)
+    stream.close()
+    return config
 
 
 def connect(username, password, host):
@@ -85,18 +93,18 @@ def connect(username, password, host):
     return api
 
 
-def run(api):
-    vmname = VM_NAME
+def run(api, config):
+    vmname = config['name'] + "-x64"
     templatename = vmname
     memory = 1*GB
-    mac = params.MAC(address=MAC_ADDRESS)
+    mac = params.MAC(address=config['mac'])
     disksize = 8*GB
 
     vm = create_vm(api, vmname, memory, mac, disksize)
 
     install_vm(api, vm)
 
-    sysprep(api, vm)
+    sysprep(api, vm, config)
     create_template(api, vm, templatename)
 
     cleanup(vm)
@@ -174,7 +182,7 @@ def install_vm(api, vm):
     vm.start()
 
 
-def sysprep(api, vm):
+def sysprep(api, vm, config):
     # Wait for installation to complete
     logging.info("Waiting for SSH connection")
     installing = True
@@ -182,7 +190,7 @@ def sysprep(api, vm):
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     while installing:
         try:
-            ssh.connect(IP_ADDRESS, username="root", timeout=3)
+            ssh.connect(config['ip'], username="root", timeout=3)
             installing = False
         except socket.error:
             sleep(10)
