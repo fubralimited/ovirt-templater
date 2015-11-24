@@ -29,7 +29,7 @@ def main():
     distros = load_config()['distros']
 
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:", ["help", "verbose", "username=", "host="])
+        opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:d:", ["help", "verbose", "username=", "host=", "distro="])
     except getopt.GetoptError as err:
         logging.error(str(err))
         usage()
@@ -38,6 +38,7 @@ def main():
     username = False
     host = False
     password = False
+    distro = False
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -49,6 +50,13 @@ def main():
             host = arg
         elif opt in ("-v", "--verbose"):
             logging.getLogger().setLevel(logging.INFO)
+        elif opt in ("-d", "--distro"):
+            d = next((item for item in distros if item["name"] == arg), None)
+            if d == None:
+                print "No distro with that name"
+                sys.exit(1)
+            else:
+                distro = d
 
     if username is False:
         username = raw_input("Enter username to connect to engine: ")
@@ -58,8 +66,11 @@ def main():
 
     api = connect(username, password, host)
 
-    for distro in distros:
+    if distro:
         run(api, distro)
+    else:
+        for d in distros:
+            run(api, d)
 
 
 def usage():
