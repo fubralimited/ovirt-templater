@@ -120,11 +120,11 @@ def run(api, config):
 
     cleanup(vm)
 
-    logging.info("Finished, created template %s", templatename)
+    logging.info("[%s] Template created", templatename)
 
 
 def create_vm(api, vmname, memory, mac, disksize):
-    logging.info("Creating VM")
+    logging.info("[%s] Creating VM", vmname)
 
     # Operating System
     osparams = params.OperatingSystem()
@@ -149,14 +149,14 @@ def create_vm(api, vmname, memory, mac, disksize):
 
     vm.set_run_once(True)
 
-    logging.info("Adding NIC")
+    logging.info("[%s] Adding NIC", vmname)
     vm.nics.add(params.NIC(
         name="eth0",
         network=params.Network(name="guests"),
         interface="virtio",
         mac=mac))
 
-    logging.info("Adding disks")
+    logging.info("[%s] Adding disks", vmname)
     vm.disks.add(params.Disk(
         storage_domains=params.StorageDomains(storage_domain=[api.storagedomains.get("data")]),
         size=disksize,
@@ -166,11 +166,11 @@ def create_vm(api, vmname, memory, mac, disksize):
         sparse=True,
         bootable=True))
 
-    logging.info("Waiting for VM to reach 'Down' state")
+    logging.info("[%s] Waiting for VM to reach 'Down' state", vmname)
     while api.vms.get(vmname).status.state != 'down':
         sleep(1)
 
-    logging.info("Waiting for disks to unlock")
+    logging.info("[%s] Waiting for disks to unlock", vmname)
     locked = True
     while locked:
         locked = False
@@ -182,20 +182,25 @@ def create_vm(api, vmname, memory, mac, disksize):
     return vm
 
 def install_vm(api, vm):
-    logging.info("Starting VM with PXE boot")
+    logging.info("[%s] Starting VM with PXE boot", vm.name)
     vm.start(action=params.Action(vm=params.VM(os=params.OperatingSystem(boot=[params.Boot(dev="network")]))))
 
-    logging.info("Waiting for install to complete")
+    logging.info("[%s] Waiting for install to complete", vm.name)
     while api.vms.get(vm.name).status.state != 'down':
         sleep(10)
 
-    logging.info("Installed, powering up VM")
+    logging.info("[%s] Installed, powering up VM", vm.name)
     vm.start()
 
 
 def sysprep(api, vm, config):
     # Wait for installation to complete
-    logging.info("Waiting for SSH connection")
+    logging.info("[%s] Waiting for SSH connection", vm.name)
+
+    # Set loglevel to quiet while SSH-ing
+    logLevel = logging.getLogger().getEffectiveLevel()
+    logging.getLogger().setLevel(logging.ERROR)
+
     installing = True
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -206,7 +211,7 @@ def sysprep(api, vm, config):
         except socket.error:
             sleep(10)
 
-    logging.info("Sysprepping VM")
+    logging.info("[%s] Sysprepping VM", vm.name)
 
     files_dir = "files/" + config['name']
 
@@ -221,13 +226,16 @@ def sysprep(api, vm, config):
 
     # TODO: check exit code or timeout
 
-    logging.info("Waiting for VM to shut down after sysprep")
+    # Reenable logging level
+    logging.getLogger().setLevel(logLevel)
+
+    logging.info("[%s] Waiting for VM to shut down after sysprep", vm.name)
     while api.vms.get(vm.name).status.state != 'down':
         sleep(5)
 
 
 def create_template(api, vm, templatename):
-    logging.info("Creating template")
+    logging.info("[%s] Creating template", templatename)
     # TODO: Use template version
     templateparams = params.Template(
         name=templatename,
@@ -235,13 +243,13 @@ def create_template(api, vm, templatename):
         vm=api.vms.get(name=vm.name))
     api.templates.add(templateparams)
 
-    logging.info("Waiting for template to unlock")
+    logging.info("[%s] Waiting for template to unlock", templatename)
     while api.templates.get(name=templatename).status.state == "locked":
         sleep(5)
 
 
 def cleanup(vm):
-    logging.info("Removing VM")
+    logging.info("[%s] Removing VM", vm.name)
     vm.delete()
 
 
