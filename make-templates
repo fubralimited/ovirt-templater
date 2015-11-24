@@ -80,6 +80,7 @@ def usage():
     -v, --verbose: show lots of output
     -u <username>, --username=<username>: the username to connect to the engine
     -r <hostname>, --host=<hostname>: the hostname or IP of the engine
+    -d <distro>, --distro=<distro>: only create the template for <distro>
 """
 
 
