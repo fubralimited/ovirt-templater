@@ -19,6 +19,6 @@ $ git clone https://github.com/fubralimited/ovirt-stuff.git
 ## Usage
 
 ```bash
-./make-template --help
-./make-template -u admin@internal -r engine.example.com -v
+./make-templates --help
+./make-templates -u admin@internal -r engine.example.com -v
 ```
