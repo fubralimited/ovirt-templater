@@ -1,0 +1,116 @@
+#!/bin/bash
+
+set -e
+set -u
+
+main() {
+	configure_cloud
+	yum_update
+	install_packages
+	enable_guest_agent
+	secure_ssh
+	remove_ssh_keys
+	remove_net_scripts
+	remove_net_persistent
+	clean_yum
+	clean_old_kernels
+	clean_tmp
+	clean_shell_history
+	clean_logs
+}
+
+configure_cloud() {
+	mv /tmp/cloud-hostname /usr/local/bin/cloud-hostname
+	chmod 755 /usr/local/bin/cloud-hostname
+	#mv /tmp/firstboot.service /etc/systemd/system/firstboot.service
+	#chmod 644 /etc/systemd/system/firstboot.service
+
+	#systemctl enable firstboot.service
+}
+
+yum_update() {
+	yum update -y
+}
+
+install_packages() {
+	yum install -y yum-utils epel-release
+	yum install -y ovirt-guest-agent
+}
+
+enable_guest_agent() {
+	chkconfig ovirt-guest-agent on
+}
+
+secure_ssh() {
+	sed -i 's/^PasswordAuthentication yes$/PasswordAuthentication no/' /etc/ssh/sshd_config
+	service sshd restart
+}
+
+remove_ssh_keys() {
+	rm -f /etc/ssh/ssh_host_*
+}
+
+remove_net_scripts() {
+	for scr in /etc/sysconfig/network-scripts/ifcfg-*; do
+		[[ "$scr" == */ifcfg-lo ]] && continue
+		rm -f "$scr"
+	done
+	>/etc/sysconfig/network
+	cat >/etc/sysconfig/network-scripts/ifcfg-eth0 <<EOF
+DEVICE=eth0
+TYPE=Ethernet
+ONBOOT=yes
+BOOTPROTO=dhcp
+EOF
+}
+
+remove_net_persistent() {
+	rm -f /etc/udev/rules.d/70-persistent-net.rules
+}
+
+clean_yum() {
+	yum clean all
+}
+
+clean_old_kernels() {
+	package-cleanup --oldkernels --count=1
+}
+
+clean_tmp() {
+	rm -rf /tmp/*
+	rm -rf /var/tmp/*
+}
+
+clean_shell_history() {
+	rm -f /root/.bash_history
+	unset HISTFILE
+}
+
+clean_logs() {
+	for log in /var/log/*.log; do
+		>"$log"
+	done
+
+	>/var/log/cron
+	>/var/log/lastlog
+	>/var/log/maillog
+	>/var/log/messages
+	>/var/log/secure
+	>/var/log/wtmp
+	>/var/log/lastlog
+	>/var/log/grubby
+	rm -f /root/anaconda-ks.{log,cfg}
+	rm -f /root/install.log{,.syslog}
+
+	# Ensure /var/log/audit/audit.log exists and is empty
+	if [ -a "/var/log/audit/audit.log" ]; then
+		>/var/log/audit/audit.log
+	else
+		mkdir -p /var/log/audit
+		touch /var/log/audit/audit.log
+		restorecon -vR /var/log/audit
+	fi
+}
+
+main
+poweroff
