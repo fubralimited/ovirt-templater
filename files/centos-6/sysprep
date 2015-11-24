@@ -4,7 +4,6 @@ set -e
 set -u
 
 main() {
-	configure_cloud
 	yum_update
 	install_packages
 	enable_guest_agent
@@ -17,15 +16,6 @@ main() {
 	clean_tmp
 	clean_shell_history
 	clean_logs
-}
-
-configure_cloud() {
-	mv /tmp/cloud-hostname /usr/local/bin/cloud-hostname
-	chmod 755 /usr/local/bin/cloud-hostname
-	#mv /tmp/firstboot.service /etc/systemd/system/firstboot.service
-	#chmod 644 /etc/systemd/system/firstboot.service
-
-	#systemctl enable firstboot.service
 }
 
 yum_update() {

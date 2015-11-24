@@ -215,9 +215,6 @@ def sysprep(api, vm, config):
     sftp.put(files_dir + "/sysprep", "/tmp/sysprep")
     sftp.chmod("/tmp/sysprep", 777)
 
-    sftp.put(files_dir + "/firstboot.service", "/tmp/firstboot.service")
-    sftp.put(files_dir + "/cloud-hostname", "/tmp/cloud-hostname")
-
     # Run sysprep script
     ssh.exec_command("/tmp/sysprep >/dev/null 2>&1")
     ssh.close()
