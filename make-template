@@ -197,13 +197,15 @@ def sysprep(api, vm, config):
 
     logging.info("Sysprepping VM")
 
+    files_dir = "files/" + config['name']
+
     # Copy sysprep script
     sftp = ssh.open_sftp()
-    sftp.put("files/sysprep", "/tmp/sysprep")
+    sftp.put(files_dir + "/sysprep", "/tmp/sysprep")
     sftp.chmod("/tmp/sysprep", 777)
 
-    sftp.put("files/firstboot.service", "/tmp/firstboot.service")
-    sftp.put("files/cloud-hostname", "/tmp/cloud-hostname")
+    sftp.put(files_dir + "/firstboot.service", "/tmp/firstboot.service")
+    sftp.put(files_dir + "/cloud-hostname", "/tmp/cloud-hostname")
 
     # Run sysprep script
     ssh.exec_command("/tmp/sysprep >/dev/null 2>&1")
