@@ -8,6 +8,7 @@ a template based off of that VM.
 - Python 2
 - [Python oVirt SDK](https://github.com/oVirt/ovirt-engine-sdk) `pip install ovirt-engine-sdk-python`
 - [Python Paramiko](https://github.com/paramiko/paramiko) `pip install paramiko`
+- [PyYAML](http://pyyaml.org) `pip install pyyaml`
 
 ## Install
 
