@@ -110,7 +110,7 @@ def run(api, config):
     templatename = vmname
     memory = 1*GB
     mac = params.MAC(address=config['mac'])
-    disksize = 8*GB
+    disksize = 20*GB
 
     vm = create_vm(api, vmname, memory, mac, disksize)
 
