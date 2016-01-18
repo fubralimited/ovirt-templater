@@ -112,7 +112,7 @@ def run(api, config):
     mac = params.MAC(address=config['mac'])
     disksize = 20*GB
 
-    vm = create_vm(api, vmname, memory, mac, disksize)
+    vm = create_vm(api, vmname, config['type'], memory, mac, disksize)
 
     install_vm(api, vm)
 
@@ -124,7 +124,7 @@ def run(api, config):
     logging.info("[%s] Template created", templatename)
 
 
-def create_vm(api, vmname, memory, mac, disksize):
+def create_vm(api, vmname, os_type, memory, mac, disksize):
     logging.info("[%s] Creating VM", vmname)
 
     # Operating System
