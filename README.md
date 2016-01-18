@@ -26,7 +26,7 @@ and the IP address will be used to connect to and sysprep the VM.
 ## Install
 
 ```bash
-$ git clone https://github.com/fubralimited/ovirt-stuff.git
+$ git clone https://github.com/fubralimited/ovirt-templater.git
 ```
 
 ## Usage
