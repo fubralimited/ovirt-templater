@@ -6,6 +6,7 @@ set -u
 main() {
 	yum_update
 	install_packages
+	switch_iptables
 	enable_guest_agent
 	secure_ssh
 	remove_ssh_keys
@@ -28,6 +29,15 @@ yum_update() {
 install_packages() {
 	yum install -y yum-utils epel-release
 	yum install -y ovirt-guest-agent
+}
+
+switch_iptables() {
+	systemctl disable firewalld
+	systemctl stop firewalld
+	systemctl mask firewalld
+	yum install -y iptables-services
+	systemctl enable iptables
+	systemctl start iptables
 }
 
 enable_guest_agent() {
