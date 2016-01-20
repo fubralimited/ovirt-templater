@@ -36,6 +36,9 @@ switch_iptables() {
 	systemctl stop firewalld
 	systemctl mask firewalld
 	yum install -y iptables-services
+
+	cp /tmp/sysprep/iptables /etc/sysconfig/iptables
+
 	systemctl enable iptables
 	systemctl start iptables
 }
