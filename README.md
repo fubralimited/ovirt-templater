@@ -23,6 +23,12 @@ is an item in the list containing entries for the name, MAC address and IP
 address used for the template VM. The MAC address is used for network booting
 and the IP address will be used to connect to and sysprep the VM.
 
+## Sysprep
+
+All files in the `files/distro/` directory will be copied to the VM at
+`/tmp/sysprep/`. A script in that directory **must** be called `sysprep` as
+that is executed on the VM after copying the files.
+
 ## Install
 
 ```bash
