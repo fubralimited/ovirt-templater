@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import getopt
+import os
 import sys
 import socket
 import getpass
@@ -216,13 +217,18 @@ def sysprep(api, vm, config):
 
     files_dir = "files/" + config['name']
 
-    # Copy sysprep script
+    # Copy all files in files_dir
     sftp = ssh.open_sftp()
-    sftp.put(files_dir + "/sysprep", "/tmp/sysprep")
-    sftp.chmod("/tmp/sysprep", 777)
+    sftp.mkdir('/tmp/sysprep')
+    for root, dirs, files in os.walk(files_dir):
+        for f in files:
+            sftp.put(root + "/" + f, "/tmp/sysprep/"+f)
+
+    # Ensure sysprep script is executable
+    sftp.chmod("/tmp/sysprep/sysprep", 777)
 
     # Run sysprep script
-    ssh.exec_command("/tmp/sysprep >/dev/null 2>&1")
+    ssh.exec_command("/tmp/sysprep/sysprep >/dev/null 2>&1")
     ssh.close()
 
     # TODO: check exit code or timeout
