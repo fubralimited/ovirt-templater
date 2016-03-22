@@ -256,7 +256,9 @@ def create_template(api, vm, templatename):
     logging.info("[%s] Creating template", templatename)
     # Delete the current version of the template
     # TODO: Use template versioning feature
-    api.templates.get(name=templatename).delete()
+    current_template = api.templates.get(name=templatename)
+    if current_template is not None:
+        current_template.delete()
     templateparams = params.Template(
         name=templatename,
         cluster=api.clusters.get(name="Default"),
