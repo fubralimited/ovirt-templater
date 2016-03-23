@@ -42,6 +42,8 @@ def main():
         username = file_config['username']
     if 'password' in file_config:
         password = file_config['password']
+    if 'host' in file_config:
+        host = file_config['host']
 
 
     # Load command line options

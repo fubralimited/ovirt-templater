@@ -61,8 +61,8 @@ network boot options on your DHCP server as well as a static IP lease. The IP
 address will be used to connect to the VM once it is installed, so a static
 lease in your DHCP server is a good idea.
 
-Additional options are available in the config file to set the `username` and
-`password` used to connect to the oVirt API.
+Additional options are available in the config file to set the `host` of the
+oVirt API, as well as the `username` and `password` used to connect to it.
 
 The example configuration file shows some definitions for CentOS 6 and
 7 installs.

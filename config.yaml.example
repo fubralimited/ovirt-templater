@@ -13,3 +13,4 @@ distros:
 
 username: admin@internal
 password: super-secret
+host: ovirt.example.com
