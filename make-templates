@@ -27,7 +27,24 @@ CONFIG_FILE = "config.yaml"
 def main():
     logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
 
-    distros = load_config()['distros']
+    file_config = load_config()
+    distros = file_config['distros']
+
+    username = False
+    host = False
+    password = False
+    distro = False
+
+
+    # Load options from config file
+
+    if 'username' in file_config:
+        username = file_config['username']
+    if 'password' in file_config:
+        password = file_config['password']
+
+
+    # Load command line options
 
     try:
         opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:d:", ["help", "verbose", "username=", "host=", "distro="])
@@ -35,11 +52,6 @@ def main():
         logging.error(str(err))
         usage()
         sys.exit(2)
-
-    username = False
-    host = False
-    password = False
-    distro = False
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -61,7 +73,8 @@ def main():
 
     if username is False:
         username = raw_input("Enter username to connect to engine: ")
-    password = getpass.getpass("Enter password to connect to engine: ")
+    if password is False:
+        password = getpass.getpass("Enter password to connect to engine: ")
     if host is False:
         host = raw_input("Enter engine hostname or IP: ")
 
