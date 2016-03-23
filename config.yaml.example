@@ -3,12 +3,12 @@
 distros:
   - name: centos-6
     mac: 00:16:3e:48:bf:08
-    ip: 87.124.72.21
+    ip: 192.168.0.1
     type: rhel_6x64
 
   - name: centos-7
     mac: 00:16:3e:7f:e0:7e 
-    ip: 87.124.72.20
+    ip: 192.168.0.2
     type: rhel_7x64
 
 username: admin@internal
