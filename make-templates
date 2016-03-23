@@ -91,13 +91,13 @@ def main():
     # Check required options
     if username is False:
         logging.error('Username is required to connect to oVirt')
-        exit(1)
+        sys.exit(1)
     if password is False:
         logging.error('Password is required to connect to oVirt')
-        exit(1)
+        sys.exit(1)
     if host is False:
         logging.error('Host is required to connect to oVirt')
-        exit(1)
+        sys.exit(1)
 
     api = connect(username, password, host)
 
