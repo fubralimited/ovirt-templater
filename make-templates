@@ -254,11 +254,16 @@ def sysprep(api, vm, config):
 
 def create_template(api, vm, templatename):
     logging.info("[%s] Creating template", templatename)
+
     # Delete the current version of the template
     # TODO: Use template versioning feature
     current_template = api.templates.get(name=templatename)
     if current_template is not None:
         current_template.delete()
+        # Wait for template to be deleted
+        while api.templates.get(name=templatename) is not None:
+            time.sleep(1)
+
     templateparams = params.Template(
         name=templatename,
         cluster=api.clusters.get(name="Default"),
