@@ -49,6 +49,7 @@ enable_guest_agent() {
 
 secure_ssh() {
 	sed -i 's/^PasswordAuthentication yes$/PasswordAuthentication no/' /etc/ssh/sshd_config
+	sed -i '/root@template-job$/d' /root/.ssh/authorized_keys
 	systemctl restart sshd
 }
 
