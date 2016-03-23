@@ -21,23 +21,37 @@ from ovirtsdk.api import API
 MB = 1024*1024
 GB = MB * 1024
 
-CONFIG_FILE = "config.yaml"
+DEFAULT_CONFIG_FILE = "config.yaml"
 
 
 def main():
     logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
 
-    file_config = load_config()
-    distros = file_config['distros']
+    # Load command line opts
+    try:
+        opts, _ = getopt.getopt(sys.argv[1:], "hvc:u:r:d:", ["help", "verbose", "config=", "username=", "host=", "distro="])
+    except getopt.GetoptError as err:
+        logging.error(str(err))
+        usage()
+        sys.exit(2)
 
+    # Prematurely parse command line options to get the "config" option
+    config_file = DEFAULT_CONFIG_FILE
+    for opt, arg in opts:
+        if opt in ('-c', '--config'):
+            config_file = arg
+
+
+    file_config = load_config(config_file)
+
+    distros = file_config['distros']
     username = False
     host = False
     password = False
     distro = False
 
 
-    # Load options from config file
-
+    # Parse options from config file
     if 'username' in file_config:
         username = file_config['username']
     if 'password' in file_config:
@@ -46,15 +60,7 @@ def main():
         host = file_config['host']
 
 
-    # Load command line options
-
-    try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hvu:r:d:", ["help", "verbose", "username=", "host=", "distro="])
-    except getopt.GetoptError as err:
-        logging.error(str(err))
-        usage()
-        sys.exit(2)
-
+    # Parse command line options
     for opt, arg in opts:
         if opt in ("-h", "--help"):
             usage()
@@ -73,6 +79,7 @@ def main():
             else:
                 distro = d
 
+    # Prompt for password if missing
     if password is False:
         password = getpass.getpass("Enter password to connect to engine: ")
 
@@ -101,14 +108,15 @@ def usage():
     print """
     -h, --help: display this usage information
     -v, --verbose: show lots of output
+    -c <config_file>, --config=<config_file>: the path to the configuration file; defaults to $PWD/config.yaml
     -u <username>, --username=<username>: the username to connect to the engine
     -r <hostname>, --host=<hostname>: the hostname or IP of the engine
     -d <distro>, --distro=<distro>: only create the template for <distro>
 """
 
 
-def load_config():
-    stream = file(CONFIG_FILE, 'r')
+def load_config(config_file):
+    stream = file(config_file, 'r')
     config = yaml.load(stream)
     stream.close()
     return config
