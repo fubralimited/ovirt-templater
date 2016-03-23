@@ -80,6 +80,8 @@ def main():
             else:
                 distro = d
         elif opt in ('-f', '--files-directory'):
+            # Modify the global
+            global FILES_DIRECTORY
             FILES_DIRECTORY = arg + '/'
 
     # Prompt for password if missing
