@@ -44,7 +44,7 @@ $ git clone https://github.com/fubralimited/ovirt-templater.git
 ## Usage
 
 - Rename the `config.yaml.example` file to `config.yaml` and customise as
-  required. See the [#configuration](configuration) section of this README for
+  required. See the [Configuration](#configuration) section of this README for
   details about the available options.
 - Run `./make-templates --help` to view available command line options.
 
