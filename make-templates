@@ -275,7 +275,7 @@ def create_template(api, vm, templatename):
         current_template.delete()
         # Wait for template to be deleted
         while api.templates.get(name=templatename) is not None:
-            time.sleep(1)
+            sleep(1)
 
     templateparams = params.Template(
         name=templatename,
