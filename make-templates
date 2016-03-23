@@ -71,12 +71,19 @@ def main():
             else:
                 distro = d
 
-    if username is False:
-        username = raw_input("Enter username to connect to engine: ")
     if password is False:
         password = getpass.getpass("Enter password to connect to engine: ")
+
+    # Check required options
+    if username is False:
+        logging.error('Username is required to connect to oVirt')
+        exit(1)
+    if password is False:
+        logging.error('Password is required to connect to oVirt')
+        exit(1)
     if host is False:
-        host = raw_input("Enter engine hostname or IP: ")
+        logging.error('Host is required to connect to oVirt')
+        exit(1)
 
     api = connect(username, password, host)
 
