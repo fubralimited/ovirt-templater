@@ -22,6 +22,7 @@ MB = 1024*1024
 GB = MB * 1024
 
 DEFAULT_CONFIG_FILE = "config.yaml"
+FILES_DIRECTORY = "files/"
 
 
 def main():
@@ -29,7 +30,7 @@ def main():
 
     # Load command line opts
     try:
-        opts, _ = getopt.getopt(sys.argv[1:], "hvc:u:r:d:", ["help", "verbose", "config=", "username=", "host=", "distro="])
+        opts, _ = getopt.getopt(sys.argv[1:], "hvc:u:r:d:f:", ["help", "verbose", "config=", "username=", "host=", "distro=", "files-directory="])
     except getopt.GetoptError as err:
         logging.error(str(err))
         usage()
@@ -78,6 +79,8 @@ def main():
                 sys.exit(1)
             else:
                 distro = d
+        elif opt in ('-f', '--files-directory'):
+            FILES_DIRECTORY = opt + '/'
 
     # Prompt for password if missing
     if password is False:
@@ -112,6 +115,7 @@ def usage():
     -u <username>, --username=<username>: the username to connect to the engine
     -r <hostname>, --host=<hostname>: the hostname or IP of the engine
     -d <distro>, --distro=<distro>: only create the template for <distro>
+    -f <directory>, --files-directory=<directory>: directory of the distro specific files; defaults to $PWD/files
 """
 
 
@@ -256,7 +260,7 @@ def sysprep(api, vm, config):
 
     logging.info("[%s] Sysprepping VM", vm.name)
 
-    files_dir = "files/" + config['name']
+    files_dir = FILES_DIRECTORY + config['name']
 
     # Copy all files in files_dir
     sftp = ssh.open_sftp()
