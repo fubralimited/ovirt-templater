@@ -57,7 +57,7 @@ secure_ssh() {
 cp_provisioning() {
 	yum install -y cloud-utils-growpart cloud-init
 	sed -i '/set_hostname$/d' /etc/cloud/cloud.cfg
-	echo "ssh-rsa ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFJsUM6w+sXV5/jQL5m/7kdcp7tcKa9EgNaSqWUbqQALkvh3ZdqpPXwL/Qlk4PRLTtQNTCRVc6FjsnJqWmv3CKYrCVIqfCgLkpTrQkErMdFUgaHyOdSZlygievvGZne/WviB3TYG9ojp4lDFM4i821RkdXDQRmK1BvPxQBLAlpE2l3e6OSIXyIg64KnNxpVBd5T8+DCat9Pf1+3/ugauNt1oQfgDlq796HPlhNOcT9DcD+ZJdXHLSatSGvC0q2N77sDLU08W3QJkn8JSsl2EIBqlh2QoX9i4cT02Fojky0CgK9SrvK+yeTIorAW4BcDZBHXNaaVOesPQ8owKQtiM// apache@ovirt-cp" >> /root/.ssh/authorized_keys
+	echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFJsUM6w+sXV5/jQL5m/7kdcp7tcKa9EgNaSqWUbqQALkvh3ZdqpPXwL/Qlk4PRLTtQNTCRVc6FjsnJqWmv3CKYrCVIqfCgLkpTrQkErMdFUgaHyOdSZlygievvGZne/WviB3TYG9ojp4lDFM4i821RkdXDQRmK1BvPxQBLAlpE2l3e6OSIXyIg64KnNxpVBd5T8+DCat9Pf1+3/ugauNt1oQfgDlq796HPlhNOcT9DcD+ZJdXHLSatSGvC0q2N77sDLU08W3QJkn8JSsl2EIBqlh2QoX9i4cT02Fojky0CgK9SrvK+yeTIorAW4BcDZBHXNaaVOesPQ8owKQtiM// apache@ovirt-cp" >> /root/.ssh/authorized_keys
 }
 
 remove_ssh_keys() {
