@@ -9,6 +9,7 @@ main() {
 	configure_iptables
 	enable_guest_agent
 	secure_ssh
+	configure_ntpd
 	remove_ssh_keys
 	remove_net_scripts
 	remove_net_persistent
@@ -42,6 +43,10 @@ secure_ssh() {
 	sed -i 's/^PasswordAuthentication yes$/PasswordAuthentication no/' /etc/ssh/sshd_config
 	sed -i '/root@template-job$/d' /root/.ssh/authorized_keys
 	service sshd restart
+}
+
+configure_ntpd() {
+	chkconfig ntpd on
 }
 
 remove_ssh_keys() {

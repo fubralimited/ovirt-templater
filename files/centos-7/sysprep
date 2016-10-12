@@ -9,6 +9,7 @@ main() {
 	switch_iptables
 	enable_guest_agent
 	secure_ssh
+	configure_ntpd
 	remove_ssh_keys
 	remove_net_scripts
 	remove_net_persistent
@@ -45,6 +46,10 @@ switch_iptables() {
 
 enable_guest_agent() {
 	systemctl enable ovirt-guest-agent
+}
+
+configure_ntpd() {
+	systemctl enable ntpd
 }
 
 secure_ssh() {
