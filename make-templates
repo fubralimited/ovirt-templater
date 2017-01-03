@@ -145,7 +145,7 @@ def connect(username, password, host):
 def run(api, config):
     vmname = config['name'] + "-x64"
     templatename = vmname
-    memory = 1*GB
+    memory = 2*GB
     mac = params.MAC(address=config['mac'])
     disksize = 20*GB
 
