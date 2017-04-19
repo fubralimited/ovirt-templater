@@ -1,0 +1,13 @@
+[Unit]
+Wants=network-online.target
+After=network-online.target
+After=remote-fs.target
+After=nss-user-lookup.target nss-lookup.target
+After=time-sync.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/firstboot
+
+[Install]
+WantedBy=multi-user.target

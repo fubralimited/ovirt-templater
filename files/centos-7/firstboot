@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# First boot script for VMs running in oVirt.
+#
+# Runs a series of functions designed for the first boot of a VM:
+#   * Resizing LVM and partitions to fit the entirety of the disk
+#   * Somewhat emulates a subset of cloud-init features:
+#     * Pulls configuration from a cloud-init standard conforming location
+#     * Configures SSH keys
+#     * Sets the hostname
+#     * Phone home to a URL
+#
+# Author: Ollie Armstrong <ollie@fubra.com>
+
+config_drive="/dev/sr1"
+logfile="/var/log/firstboot.log"
+
+# Write to the log file
+log() {
+	echo "$@" >>$logfile
+}
+
+# Checks if we have the cloud-init conforming configuration at the expected
+# device location.
+is_cloud-init() {
+	# Check the drive is inserted
+	if [ ! -b "$config_drive" ]; then
+		return 1
+	fi
+}
+
+# Grows the partition, LVM and filesystem to fit the entirety of the disk.
+grow_disk() {
+	local disk="/dev/vda"
+	local partition="${disk}3"
+	local lv="/dev/vg_root/lv_root"
+
+	# Resize the partition
+	(
+		echo d
+		echo 3
+		echo n
+		echo p
+		echo 3
+		echo
+		echo
+		echo w
+	) | fdisk "$disk" >/dev/null
+
+	# Tell the kernel we have a new partition table
+	partx -u "$partition"
+
+	# Resize the LVM stuff
+	pvresize "$partition"
+	lvextend "$lv" "$partition"
+
+	# Grow the filesystem
+	xfs_growfs "$lv"
+}
+
+# Grabs the configuration from the cloud-init conforming CD drive and runs the
+# cloud-init subset of tasks.
+cloud-init_provision() {
+	# Mount the drive
+	local mount_point
+	mount_point="$(mktemp -d)"
+	# shellcheck disable=SC2064
+	trap "{ umount $mount_point; rmdir $mount_point; }" EXIT
+	if ! mount -o ro "$config_drive" "$mount_point"; then
+		log "Unable to mount config drive"
+		return 2
+	fi
+
+	# Grab the variables from the config
+	local config_file="$mount_point/openstack/latest/user_data"
+	eval "$(sed -e '1,/#fubra-config/d' "$config_file")"
+
+	# Check if any SSH keys need to be added
+	# shellcheck disable=SC2154
+	if [[ -n $ssh_key ]] || [[ ! $ssh_key =~ ^\ +$ ]]; then
+		log "Adding SSH key"
+		echo "$ssh_key" >>/root/.ssh/authorized_keys
+	fi
+
+	# Set the hostname
+	# shellcheck disable=SC2154
+	if [[ -n $hostname ]] || [[ ! $hostname =~ ^\ +$ ]]; then
+		log "Setting hostname"
+		hostnamectl set-hostname "$hostname"
+	fi
+
+	# Phone home for provisioning
+	# shellcheck disable=SC2154
+	if [[ -n $phone_home ]] || [[ ! $phone_home =~ ^\ +$ ]]; then
+		log "Phoning home for provisioning"
+		curl --silent -X POST "$phone_home"
+	fi
+
+}
+
+# Removes itself from the system
+cleanup() {
+	rm -f /etc/systemd/system/multi-user.target.wants/firstboot.service
+	rm -f /etc/systemd/system/firstboot.service
+	rm -f /usr/local/bin/firstboot
+}
+
+main() {
+	log "Running firstboot at $(date)"
+
+	grow_disk
+	if is_cloud-init; then
+		cloud-init_provision
+	fi
+
+	cleanup
+}
+
+main "$@"
