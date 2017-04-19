@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=2188
 
 set -e
 set -u
