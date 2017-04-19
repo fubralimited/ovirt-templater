@@ -7,7 +7,7 @@ After=time-sync.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/firstboot
+ExecStart=/usr/local/bin/firstboot >>/var/log/firstboot.log 2>&1
 
 [Install]
 WantedBy=multi-user.target

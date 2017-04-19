@@ -13,12 +13,6 @@
 # Author: Ollie Armstrong <ollie@fubra.com>
 
 config_drive="/dev/sr1"
-logfile="/var/log/firstboot.log"
-
-# Write to the log file
-log() {
-	echo "$@" >>$logfile
-}
 
 # Checks if we have the cloud-init conforming configuration at the expected
 # device location.
@@ -67,7 +61,7 @@ cloud-init_provision() {
 	# shellcheck disable=SC2064
 	trap "{ umount $mount_point; rmdir $mount_point; }" EXIT
 	if ! mount -o ro "$config_drive" "$mount_point"; then
-		log "Unable to mount config drive"
+		echo "Unable to mount config drive"
 		return 2
 	fi
 
@@ -78,21 +72,21 @@ cloud-init_provision() {
 	# Check if any SSH keys need to be added
 	# shellcheck disable=SC2154
 	if [[ -n $ssh_key ]] || [[ ! $ssh_key =~ ^\ +$ ]]; then
-		log "Adding SSH key"
+		echo "Adding SSH key"
 		echo "$ssh_key" >>/root/.ssh/authorized_keys
 	fi
 
 	# Set the hostname
 	# shellcheck disable=SC2154
 	if [[ -n $hostname ]] || [[ ! $hostname =~ ^\ +$ ]]; then
-		log "Setting hostname"
+		echo "Setting hostname"
 		hostnamectl set-hostname "$hostname"
 	fi
 
 	# Phone home for provisioning
 	# shellcheck disable=SC2154
 	if [[ -n $phone_home ]] || [[ ! $phone_home =~ ^\ +$ ]]; then
-		log "Phoning home for provisioning"
+		echo "Phoning home for provisioning"
 		curl --silent -X POST "$phone_home"
 	fi
 
@@ -106,7 +100,7 @@ cleanup() {
 }
 
 main() {
-	log "Running firstboot at $(date)"
+	echo "Running firstboot at $(date)"
 
 	grow_disk
 	if is_cloud-init; then
