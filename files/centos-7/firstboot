@@ -38,6 +38,9 @@ grow_disk() {
 		echo 3
 		echo
 		echo
+		echo t
+		echo 3
+		echo 8e
 		echo w
 	) | fdisk "$disk" >/dev/null
 
