@@ -83,7 +83,8 @@ cloud-init_provision() {
 	# shellcheck disable=SC2154
 	if [[ -n $hostname ]] && [[ ! $hostname =~ ^\ +$ ]]; then
 		echo "Setting hostname"
-		hostnamectl set-hostname "$hostname"
+		echo "$hostname" >/etc/hostname
+		hostname "$hostname"
 	fi
 
 	# Phone home for provisioning
