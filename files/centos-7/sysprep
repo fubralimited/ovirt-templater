@@ -51,6 +51,9 @@ enable_guest_agent() {
 }
 
 configure_ntpd() {
+	systemctl disable chronyd
+	yum erase -y chrony
+	yum install -y ntp
 	systemctl enable ntpd
 }
 
