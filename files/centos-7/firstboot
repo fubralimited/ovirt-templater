@@ -71,21 +71,21 @@ cloud-init_provision() {
 
 	# Check if any SSH keys need to be added
 	# shellcheck disable=SC2154
-	if [[ -n $ssh_key ]] || [[ ! $ssh_key =~ ^\ +$ ]]; then
+	if [[ -n $ssh_key ]] && [[ ! $ssh_key =~ ^\ +$ ]]; then
 		echo "Adding SSH key"
 		echo "$ssh_key" >>/root/.ssh/authorized_keys
 	fi
 
 	# Set the hostname
 	# shellcheck disable=SC2154
-	if [[ -n $hostname ]] || [[ ! $hostname =~ ^\ +$ ]]; then
+	if [[ -n $hostname ]] && [[ ! $hostname =~ ^\ +$ ]]; then
 		echo "Setting hostname"
 		hostnamectl set-hostname "$hostname"
 	fi
 
 	# Phone home for provisioning
 	# shellcheck disable=SC2154
-	if [[ -n $phone_home ]] || [[ ! $phone_home =~ ^\ +$ ]]; then
+	if [[ -n $phone_home ]] && [[ ! $phone_home =~ ^\ +$ ]]; then
 		echo "Phoning home for provisioning"
 		curl --silent -X POST "$phone_home"
 	fi
