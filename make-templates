@@ -127,7 +127,7 @@ def load_config(config_file):
 def connect(username, password, host):
     try:
         api = API(
-            url="https://{}/api".format(host),
+            url="https://{}/ovirt-engine/api".format(host),
             username=username,
             password=password,
             insecure=True)
